@@ -12,8 +12,13 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 CORS(app)
 
+
+
 # create the jackson family object
 jackson_family = FamilyStructure("Jackson")
+
+
+
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
@@ -25,36 +30,44 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+
+#1. GET DE ALL MEMBERS
 @app.route('/members', methods=['GET'])
 def get_all_members():
     members = jackson_family.get_all_members()
-    response_body = {
-        "family": members
-    }
-    return jsonify(response_body), 200
+    
+    return jsonify('se ha hecho un get all', members), 200
+
+#2. GET DE MEMBER ID
 
 @app.route('/members/<int:member_id>', methods=['GET'])
 def get_member(member_id):
-    member = jackson_family.get_member_by_id(member_id)
+    member = jackson_family.get_member(member_id)
     if member is None:
-        raise APIException("Member not found", status_code=404)
+       raise APIException("Member not found", status_code=404)
     return jsonify(member), 200
+
+#3. POST DE MEMBERS
 
 @app.route('/members', methods=['POST'])
 def add_member():
-    new_member = request.json  
-    jackson_family.add_member(new_member)  
-    return jsonify(new_member), 201 
+    response_body = request.get_json()
+    jackson_family.add_member(response_body)
+    return jsonify('has añadido un member', response_body), 200
+
+#4. DELETE DE MEMBER ID
 
 @app.route('/members/<int:member_id>', methods=['DELETE'])
 def delete_member(member_id):
-    member = jackson_family.get_member_by_id(member_id)  # Obtener el miembro de la familia por su ID
+    member = jackson_family.get_member(member_id) 
     if member is None:
-        raise APIException("Member not found", status_code=404)  # Si el miembro no se encuentra, lanzar una excepción
+        raise APIException("Member not found", status_code=404) 
 
-    jackson_family.delete_member(member_id)  # Eliminar el miembro de la familia
+    jackson_family.delete_member(member_id)
 
-    return jsonify({"message": "Member deleted successfully"}), 200  # Devolver una respuesta JSON con un mensaje de éxito y el código de estado 200
+    return jsonify({"message": "Member deleted successfully"}), 200 
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
